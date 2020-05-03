@@ -5,7 +5,6 @@ Created on Sun May  3 12:52:00 2020
 @author: flaviagv
 """
 
-# Normalize data.
 
 import numpy as np 
 from tensorflow.keras.datasets import cifar10
@@ -13,11 +12,26 @@ import tensorflow.keras
 
 
 def preprocess_features(x_train, x_test, substract_pixel_mean):
+    """
+    Perform normalization (all values between 0 and 1) and mean normalization
+    if substract_pixel_mean=True.
 
+    Parameters
+    ----------
+    x_train : numpy array
+    x_test :  numpy array
+    substract_pixel_mean : boolean
+
+    Returns
+    -------
+    x_train : numpy array
+    x_test : numpy array
+
+    """
+    
     x_train = x_train.astype('float32') / 255
     x_test = x_test.astype('float32') / 255
     
-    # If subtract pixel mean is enabled
     if substract_pixel_mean:
         x_train_mean = np.mean(x_train, axis=0)
         x_train -= x_train_mean
@@ -27,9 +41,23 @@ def preprocess_features(x_train, x_test, substract_pixel_mean):
     
 
     
-def get_train_val_test_data(dataset_name, n_val_samples, categorical_targets=True, 
-                            substract_pixel_mean=True, verbose=False):
+def get_train_val_test_data(n_val_samples, categorical_targets=True, 
+                            substract_pixel_mean=True, verbose=0):
+    """
+    CIFAR-10 ready for training, validating and testing the model/s. 
     
+    Parameters
+    ----------
+    n_val_samples : integer
+    categorical_targets : boolean, default=True
+    substract_pixel_mean : boolean, default=True
+    verbose : integer, default=False
+
+    Returns
+    -------
+    (x_train, y_train), (x_val, y_val), (x_test, y_test)
+
+    """
     (x_train, y_train), (x_test, y_test) = cifar10.load_data()
     x_train, x_test = preprocess_features(x_train, x_test, substract_pixel_mean)
     
@@ -54,7 +82,21 @@ def get_train_val_test_data(dataset_name, n_val_samples, categorical_targets=Tru
     
     return (x_train, y_train), (x_val, y_val), (x_test, y_test)
 
+
 def split_train_dataset(x_train, y_train, n_val_samples):  
+    """
+    Parameters
+    ----------
+    x_train : numpy array
+    y_train : numpy array
+    n_val_samples : integer
+        Number of samples in the validation set.
+
+    Returns
+    -------
+    (x_train, y_train), (x_val, y_val)    
+
+    """
     indices = np.random.permutation(x_train.shape[0])
     val_idx, train_idx = indices[:n_val_samples], indices[n_val_samples:]
     x_train, x_val = x_train[train_idx,:], x_train[val_idx,:]
