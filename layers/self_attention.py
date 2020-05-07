@@ -28,8 +28,6 @@ class SelfAttention2D:
         N_h : integer
             number of heads.
         relative : bool, optional
-            DESCRIPTION. The default is True.
-
         """
         self.N_h = N_h
         self.depth_k = depth_k
@@ -41,33 +39,55 @@ class SelfAttention2D:
     
 
     def split_heads(self, inputs):
-        """Split channels into multiple heads."""
+        """
+        Split channels into multiple heads.
+
+        Parameters
+        ----------
+        inputs : tensor/s with shape=[n_samples_batch, height, width, total_depth]
+
+        Returns
+        -------
+        inputs_h: tensor/s with shape=[n_samples_batch, n_heads, height, width, depth_per_head]        
+        """
         B, H, W, d = utils.get_img_shape(inputs)
         ret_shape = [B, H, W, self.N_h, d//self.N_h]
         split = tf.reshape(inputs, ret_shape)
-        return tf.transpose(split, [0, 3, 1, 2, 4])
+        inputs_h = tf.transpose(split, [0, 3, 1, 2, 4])
+
+        return inputs_h
 
 
-    def combine_heads(self, inputs):
-        """Combine heads (inverse of split heads 2d)."""
-        transposed = tf.transpose(inputs, [0, 2, 3, 1, 4])
-        Nh, channels = utils.get_img_shape(transposed)[-2:]
+    def combine_heads_2d(self, inputs_h):
+        """
+        Combine heads (inverse of split heads 2d).
+        Parameters
+        ----------
+        inputs_h : tensor/s with shape=[n_samples_batch, n_heads, height, width, depth_per_head] 
+
+        Returns
+        -------
+        inputs: tensor/s with shape=[n_samples_batch, height, width, total_depth]
+        """
+        transposed = tf.transpose(inputs_h, [0, 2, 3, 1, 4])
+        _, channels = utils.get_img_shape(transposed)[-2:]
         ret_shape = utils.get_img_shape(transposed)[:-2] + [self.N_h * channels]
-        return tf.reshape(transposed, ret_shape)
+        inputs = tf.reshape(transposed, ret_shape)
+        return inputs
 
 
-    def self_attention_2d(self, inputs):
+    def forward_pass(self, inputs): # self_attention_2d
         """
         2d relative self−attention.
 
         Parameters
         ----------
-        inputs : image tensor/s
-            DESCRIPTION.
+        inputs : image tensor/s shape=[n_samples_batch, H, W, 3]
 
         Returns
         -------
-        None.
+        MHA_output: tensor/s shape=[n_samples_batch, H, W, self.depth_v]
+          Multi-head attention features. 
 
         """
         _, H, W, _ = utils.get_img_shape(inputs)
@@ -76,13 +96,14 @@ class SelfAttention2D:
 
         # Compute q, k, v
         total_depth = 2 * self.depth_k + self.depth_v
-        k_q_v = Conv2D(inputs, filters = total_depth, kernel_size = 1) # point-wise convolution
+        k_q_v = Conv2D(filters = total_depth, kernel_size = 1)(inputs) # point-wise convolution
         k, q, v = tf.split(k_q_v, [self.depth_k, self.depth_k, self.depth_v], axis=3)
         q *= self.depth_k_h ** -0.5 # scaled dot−product
+        
         # After splitting, shape is [B, N_h, H, W, d_k_h or d_v_h]
-        q_h = self.split_heads(q, self.N_h)
-        k_h = self.split_heads(k, self.N_h)
-        v_h = self.split_heads(v, self.N_h)
+        q_h = self.split_heads(q)
+        k_h = self.split_heads(k)
+        v_h = self.split_heads(v)
 
         # [B, Nh, HW, HW]
         logits = tf.matmul(flatten_hw(q_h, self.depth_k_h), flatten_hw(k_h, self.depth_k_h), transpose_b=True)
@@ -101,14 +122,17 @@ class SelfAttention2D:
         O = self.combine_heads_2d(O_h)
 
         # Project heads
-        MHA_output = tf.layers.conv2d(O, filters =  self.depth_v, kernel_size=1) # point-wise product
+        MHA_output = Conv2D(filters=self.depth_v, kernel_size=1)(O) # point-wise product
 
         return MHA_output
 
+
+"""
 (x_train, y_train), (x_val, y_val), (x_test, y_test) = data_loader.get_train_val_test_data(5000)
 
 #x_train = tf.data.Dataset.from_tensor_slices(x_train)
-a = tf.convert_to_tensor(x_train)
-attention_layer = SelfAttention2D(N_h=8, depth_k=20, depth_v=20)
+a = tf.convert_to_tensor(x_train[:5])
+attention_layer = SelfAttention2D(N_h=8, depth_k=160, depth_v=160)
 attention_layer.self_attention_2d(a)
 
+"""
