@@ -2,7 +2,7 @@
 """
 Created on Tue May  5 22:06:07 2020
 
-@author: FlaviaGV
+@author: MatteoDM, FernandoGS, FlaviaGV
 """
 
 import tensorflow as tf 
@@ -32,16 +32,27 @@ def get_img_shape(x):
 
 
 def rel_to_abs(x):
-    """Converts tensor from relative to absolute indexing."""
-    # [B, Nh, L, 2L−1]
-    B, Nh, L, _= get_img_shape(x)
+    """
+    Converts tensor from relative to absolute indexing.
+    
+    Parameters
+    ----------
+    x : tensor/s
+
+    Returns
+    -------
+    final_x:
+        
+    """
+    # [B, N_h, L, 2L−1]
+    B, N_h, L, _= get_img_shape(x)
     # Pad to shift from relative to absolute indexing.
     col_pad = tf.zeros((B, N_h, L, 1))
     x = tf.concat([x, col_pad], axis=3)
-    flat_x = tf.reshape(x, [B, N_h, L ∗ 2 ∗ L])
-    flat_pad = tf.zeros((B, N_h, L−1))
-    flat x padded = tf.concat([flat_x, flat_pad], axis=2)
+    flat_x = tf.reshape(x, [B, N_h, L*2*L])
+    flat_pad = tf.zeros((B, N_h, L-1))
+    flat_x_padded = tf.concat([flat_x, flat_pad], axis=2)
     # Reshape and slice out the padded elements.
-    final_x = tf.reshape(flat_x_padded, [B, N_h, L+1, 2∗L−1])
-    final_x = final_x[:, :, :L, L−1:]
+    final_x = tf.reshape(flat_x_padded, [B, N_h, L+1, 2*L-1])
+    final_x = final_x[:, :, :L, L-1:]
     return final_x
