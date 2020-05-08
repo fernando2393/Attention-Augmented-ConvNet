@@ -45,7 +45,7 @@ class TrainingEngine:
       self.train_loss(loss)
       self.train_accuracy(labels, predictions)
       
-      
+     
     @tf.function
     def __test_step(self, images, labels):
       # training=False is only needed if there are layers with different
