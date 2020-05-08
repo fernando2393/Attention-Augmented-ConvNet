@@ -8,7 +8,7 @@ import tensorflow as tf
 import tensorflow.keras
 from preprocessing.augmentation import Augment2D
 from engine.learning_rate.linear_cos_annealing import LinearCosAnnelingLrSchedule
-
+from tqdm import tqdm
 
 class TrainingEngine:
     def __init__(self, model):
@@ -58,7 +58,7 @@ class TrainingEngine:
       
     def fit(self, train_data, validation_data, batch_size=100, epochs=20, shuffle=True, data_augmentation=False, verbose=True):
 
-      for epoch in range(epochs):
+      for epoch in tqdm(range(epochs)):
           self.train_loss.reset_states()
           self.train_accuracy.reset_states()
           self.test_loss.reset_states()
@@ -77,7 +77,7 @@ class TrainingEngine:
           for batch_x, batch_y in batched_train_data:
               self.__train_step(batch_x, batch_y)
 
-          batched_val_data = epoch_train_data.batch(batch_size)
+          batched_val_data = validation_data.batch(batch_size)
           for batch_x_val, batch_y_val in batched_val_data:
               self.__test_step(batch_x_val, batch_y_val)
           
@@ -88,4 +88,4 @@ class TrainingEngine:
                                     self.train_accuracy.result() * 100,
                                     self.test_loss.result(),
                                     self.test_accuracy.result() * 100,
-                                    self.optimizer.lr.last_lr))
+                                    self.optimizer.lr.numpy()))

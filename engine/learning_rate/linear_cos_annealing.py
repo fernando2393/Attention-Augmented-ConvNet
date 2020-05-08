@@ -4,6 +4,7 @@ Created on Fri May  8 20:21:32 2020
 
 @author: matte
 """
+import numpy as np
 
 class LinearCosAnnelingLrSchedule():
     def __init__(self, cos_lr_n_min=0.004, cos_lr_n_max=0.020, cos_lr_T_0=10, cos_lr_T_mult=2, lr_linear_final_epoch=25, batch_size=128):
