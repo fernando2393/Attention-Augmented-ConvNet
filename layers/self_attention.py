@@ -37,6 +37,55 @@ class SelfAttention2D:
         self.relative = relative
 
     
+    def forward_pass(self, inputs): # self_attention_2d
+        """
+        2d relative self−attention.
+
+        Parameters
+        ----------
+        inputs : image tensor/s shape=[n_samples_batch, H, W, 3]
+
+        Returns
+        -------
+        MHA_output: tensor/s shape=[n_samples_batch, H, W, self.depth_v]
+          Multi-head attention features. 
+
+        """
+        _, H, W, _ = utils.get_img_shape(inputs)
+
+        flatten_hw = lambda x, d: tf.reshape(x, [-1, self.N_h, H*W, d])
+
+        # Compute q, k, v
+        total_depth = 2 * self.depth_k + self.depth_v
+        k_q_v = Conv2D(filters = total_depth, kernel_size = 1)(inputs) # point-wise convolution
+        k, q, v = tf.split(k_q_v, [self.depth_k, self.depth_k, self.depth_v], axis=3)
+        q *= self.depth_k_h ** -0.5 # scaled dot−product
+        
+        # After splitting, shape is [B, N_h, H, W, d_k_h or d_v_h]
+        q_h = self.split_heads(q)
+        k_h = self.split_heads(k)
+        v_h = self.split_heads(v)
+
+        # [B, Nh, HW, HW]
+        logits = tf.matmul(flatten_hw(q_h, self.depth_k_h), flatten_hw(k_h, self.depth_k_h), transpose_b=True)
+
+
+        if self.relative:
+            rel_logits_h, rel_logits_w = self.relative_logits(q_h, H, W)
+            logits += rel_logits_h
+            logits += rel_logits_w
+
+        # Attention map
+        weights = tf.nn.softmax(logits)
+        O_h = tf.matmul(weights, flatten_hw(v_h, self.depth_v_h))
+        O_h = tf.reshape(O_h, [-1, self.N_h, H, W, self.depth_v_h])
+        O = self.combine_heads_2d(O_h)
+
+        # Project heads
+        MHA_output = Conv2D(filters=self.depth_v, kernel_size=1)(O) # point-wise product
+
+        return MHA_output
+
 
     def split_heads(self, inputs):
         """
@@ -74,57 +123,45 @@ class SelfAttention2D:
         ret_shape = utils.get_img_shape(transposed)[:-2] + [self.N_h * channels]
         inputs = tf.reshape(transposed, ret_shape)
         return inputs
-
-
-    def forward_pass(self, inputs): # self_attention_2d
-        """
-        2d relative self−attention.
-
-        Parameters
-        ----------
-        inputs : image tensor/s shape=[n_samples_batch, H, W, 3]
-
-        Returns
-        -------
-        MHA_output: tensor/s shape=[n_samples_batch, H, W, self.depth_v]
-          Multi-head attention features. 
-
-        """
-        _, H, W, _ = utils.get_img_shape(inputs)
-
-        flatten_hw = lambda x, d: tf.reshape(x, [-1, self.N_h, H*W, d])
-
-        # Compute q, k, v
-        total_depth = 2 * self.depth_k + self.depth_v
-        k_q_v = Conv2D(filters = total_depth, kernel_size = 1)(inputs) # point-wise convolution
-        k, q, v = tf.split(k_q_v, [self.depth_k, self.depth_k, self.depth_v], axis=3)
-        q *= self.depth_k_h ** -0.5 # scaled dot−product
-        
-        # After splitting, shape is [B, N_h, H, W, d_k_h or d_v_h]
-        q_h = self.split_heads(q)
-        k_h = self.split_heads(k)
-        v_h = self.split_heads(v)
-
+    
+    
+   def relative_logits(self, q_h, H, W):
+        """Compute relative logits."""
+        # Relative logits in width dimension first.
+        rel_embedding_w = tf.get variable('r_width', shape=(2*W - 1, self.depth_k_h),
+        initializer = tf.random_normal_initializer(self.depth_k_h**-0.5))
         # [B, Nh, HW, HW]
-        logits = tf.matmul(flatten_hw(q_h, self.depth_k_h), flatten_hw(k_h, self.depth_k_h), transpose_b=True)
+        rel_logits_w = self.relative_logits_1d(q_h, rel_embedding_w, H, W, [0, 1, 2, 4, 3, 5])
+        
+        # Relative logits in height dimension next.
+        # For ease, we 1) transpose height and width,
+        # 2) repeat the above steps and
+        # 3) transpose to eventually put the logits
+        # in their right positions.
+        rel_embeddings_h = tf.get variable('r height', shape=(2 * H - 1, self.depth_k_h),
+        initializer=tf.random normal initializer(self.depth_k_h ** -0.5))
+        # [B, Nh, HW, HW]
+        rel_logits_h = self.relative_logits_1d(tf.transpose(q_h, [0, 1, 3, 2, 4]), rel_embeddings_h, W, H, [0, 1, 4, 2, 5, 3])
+        
+        return rel_logits_h, rel_logits_w
+    
+    
+    def relative_logits_1d(self, q_h, rel_k, H, W, transpose mask):
+        """Compute relative logits along one dimenion."""
+        rel_logits = tf.einsum('bhxyd,md->bhxym', q_h, rel_k)
+        # Collapse height and heads
+        rel_logits = tf.reshape(rel_logits, [-1, self.N_h * H, W, 2 * W-1])
+        rel_logits = utils.rel_to_abs(rel_logits)
+        # Shape it and tile height times
+        rel_logits = tf.reshape(rel logits, [-1, self.N_h, H, W, W])
+        rel_logits = tf.expand_dims(rel_logits, axis=3)
+        rel_logits = tf.tile(rel_logits, [1, 1, 1, H, 1, 1])
+        # Reshape for adding to the logits.
+        rel_logits = tf.transpose(rel_logits, transpose_mask)
+        rel_logits = tf.reshape(rel_logits, [-1, self.N_h, H*W, H*W])
+        return rel_logits
 
 
-        # if self.relative:
-        #     rel logits h, rel logits w = relative logits(q, H, W, Nh,
-        #     dkh)
-        #     logits += rel_logits_h
-        #     logits += rel_logits_w
-
-        # Attention map
-        weights = tf.nn.softmax(logits)
-        O_h = tf.matmul(weights, flatten_hw(v_h, self.depth_v_h))
-        O_h = tf.reshape(O_h, [-1, self.N_h, H, W, self.depth_v_h])
-        O = self.combine_heads_2d(O_h)
-
-        # Project heads
-        MHA_output = Conv2D(filters=self.depth_v, kernel_size=1)(O) # point-wise product
-
-        return MHA_output
 
 
 """
@@ -133,6 +170,6 @@ class SelfAttention2D:
 #x_train = tf.data.Dataset.from_tensor_slices(x_train)
 a = tf.convert_to_tensor(x_train[:5])
 attention_layer = SelfAttention2D(N_h=8, depth_k=160, depth_v=160)
-attention_layer.self_attention_2d(a)
+attention_layer.forward_pass(a)
 
 """
