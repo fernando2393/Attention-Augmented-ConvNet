@@ -57,35 +57,44 @@ class TrainingEngine:
       self.test_accuracy(labels, predictions)
       
     def fit(self, train_data, validation_data, batch_size=100, epochs=20, shuffle=True, data_augmentation=False, verbose=True):
-
-      for epoch in tqdm(range(epochs)):
-          self.train_loss.reset_states()
-          self.train_accuracy.reset_states()
-          self.test_loss.reset_states()
-          self.test_accuracy.reset_states()
+        self.batch_size = batch_size
+        for epoch in tqdm(range(epochs)):
+            self.train_loss.reset_states()
+            self.train_accuracy.reset_states()
+            self.test_loss.reset_states()
+            self.test_accuracy.reset_states()
+            
+            self.optimizer.lr.assign(self.lr_scheduler.get_learning_rate(epoch))
+        
+            if shuffle:
+                epoch_train_data = train_data.shuffle(len(list(train_data)))
+            else:
+                epoch_train_data = train_data
+            if data_augmentation:
+                epoch_train_data = self.data_augmentation_module.transform(epoch_train_data)
+                
+            batched_train_data = epoch_train_data.batch(batch_size)
+            for batch_x, batch_y in batched_train_data:
+                self.__train_step(batch_x, batch_y)
           
-          self.optimizer.lr.assign(self.lr_scheduler.get_learning_rate(epoch))
-  
-          if shuffle:
-              epoch_train_data = train_data.shuffle(len(list(train_data)))
-          else:
-              epoch_train_data = train_data
-          if data_augmentation:
-              epoch_train_data = self.data_augmentation_module.transform(epoch_train_data)
-              
-          batched_train_data = epoch_train_data.batch(batch_size)
-          for batch_x, batch_y in batched_train_data:
-              self.__train_step(batch_x, batch_y)
-
-          batched_val_data = validation_data.batch(batch_size)
-          for batch_x_val, batch_y_val in batched_val_data:
-              self.__test_step(batch_x_val, batch_y_val)
-          
-          if verbose:
-              template = 'Epoch {}, Loss: {}, Accuracy: {}, Validation Loss: {}, Validation Accuracy: {}, Learning rate: {}'
-              print(template.format(epoch + 1,
-                                    self.train_loss.result(),
-                                    self.train_accuracy.result() * 100,
-                                    self.test_loss.result(),
-                                    self.test_accuracy.result() * 100,
-                                    self.optimizer.lr.numpy()))
+            batched_val_data = validation_data.batch(batch_size)
+            for batch_x_val, batch_y_val in batched_val_data:
+                self.__test_step(batch_x_val, batch_y_val)
+            
+            if verbose:
+                template = 'Epoch {}, Loss: {}, Accuracy: {}, Validation Loss: {}, Validation Accuracy: {}, Learning rate: {}'
+                print(template.format(epoch + 1,
+                                      self.train_loss.result(),
+                                      self.train_accuracy.result() * 100,
+                                      self.test_loss.result(),
+                                      self.test_accuracy.result() * 100,
+                                      self.optimizer.lr.numpy()))
+                
+    def evaluate(self, test_data):
+        self.test_loss.reset_states()
+        self.test_accuracy.reset_states()
+        batched_test_data = test_data.batch(self.batch_size)
+        for batch_x_test, batch_y_test in batched_test_data:
+            self.__test_step(batch_x_test, batch_y_test)
+        
+        return self.test_accuracy.result().numpy(), self.test_loss.result().numpy() 
