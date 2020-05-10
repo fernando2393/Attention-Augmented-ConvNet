@@ -8,6 +8,18 @@ Created on Sat May  9 20:06:06 2020
 class StepLearningRate():
     
     def get_learning_rate(self, epoch):
+        """
+        Parameters
+        ----------
+        epoch : integer
+            Current epoch.
+
+        Returns
+        -------
+        lr : float
+            Current learning rate per epoch.
+
+        """
         lr = 1e-3
         if epoch > 180:
             lr *= 0.5e-3
@@ -17,5 +29,4 @@ class StepLearningRate():
             lr *= 1e-2
         elif epoch > 80:
             lr *= 1e-1
-        #print('Learning rate: ', lr)
         return lr

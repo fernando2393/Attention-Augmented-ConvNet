@@ -11,6 +11,7 @@ from engine.learning_rate.linear_cos_annealing import LinearCosAnnelingLrSchedul
 from tqdm import tqdm
 
 class TrainingEngine:
+    
     def __init__(self, model):
         
         self.model = model
@@ -19,7 +20,7 @@ class TrainingEngine:
 
         self.loss_object = tf.keras.losses.CategoricalCrossentropy(from_logits=True)
 
-        self.optimizer = tf.keras.optimizers.SGD(learning_rate=self.lr_scheduler.get_learning_rate(0))
+        self.optimizer = tf.keras.optimizers.SGD(learning_rate=self.lr_scheduler.get_learning_rate(0), momentum=0.9)
     
         self.train_loss = tf.keras.metrics.Mean(name='train_loss')
     
@@ -56,7 +57,33 @@ class TrainingEngine:
       self.test_loss(t_loss)
       self.test_accuracy(labels, predictions)
       
+      
     def fit(self, train_data, validation_data, batch_size=100, epochs=20, shuffle=True, data_augmentation=False, verbose=True):
+        """
+        
+
+        Parameters
+        ----------
+        train_data : TensorFlow Dataset
+
+        validation_data : TensorFlow Dataset
+            DESCRIPTION.
+        batch_size : Integer, optional
+            DESCRIPTION. The default is 100.
+        epochs : Integer, optional
+            DESCRIPTION. The default is 20.
+        shuffle : Boolean, optional
+            DESCRIPTION. The default is True.
+        data_augmentation : Boolean, optional
+            DESCRIPTION. The default is False.
+        verbose : Boolean, optional
+            DESCRIPTION. The default is True.
+
+        Returns
+        -------
+        None.
+
+        """
         self.batch_size = batch_size
         for epoch in tqdm(range(epochs)):
             self.train_loss.reset_states()
@@ -90,7 +117,24 @@ class TrainingEngine:
                                       self.test_accuracy.result() * 100,
                                       self.optimizer.lr.numpy()))
                 
+                
     def evaluate(self, test_data):
+        """
+        
+
+        Parameters
+        ----------
+        test_data : TensorFlow Dataset
+            
+
+        Returns
+        -------
+        numpy
+            test accuracy.
+        numpy
+            test loss.
+
+        """
         self.test_loss.reset_states()
         self.test_accuracy.reset_states()
         batched_test_data = test_data.batch(self.batch_size)

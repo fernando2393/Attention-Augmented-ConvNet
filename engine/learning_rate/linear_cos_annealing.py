@@ -7,6 +7,7 @@ Created on Fri May  8 20:21:32 2020
 import numpy as np
 
 class LinearCosAnnelingLrSchedule():
+    ''
     def __init__(self, cos_lr_n_min=0.004, cos_lr_n_max=0.020, cos_lr_T_0=10, cos_lr_T_mult=2, lr_linear_final_epoch=25, batch_size=128):
         
         self.cos_lr_n_min = cos_lr_n_min
@@ -19,6 +20,7 @@ class LinearCosAnnelingLrSchedule():
         self.__cos_lr_passed_epochs = 0 
         self.__cos_lr_cycles = 0
         self.last_lr = 0
+    
     
     def get_learning_rate(self, epoch):
         
