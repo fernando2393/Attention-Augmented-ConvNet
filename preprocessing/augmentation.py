@@ -37,16 +37,16 @@ class Augment2D:
 
         """
         if self.horizontal_flip:
-            data = data.map(lambda x: tf.image.random_flip_left_right(x),
+            data = data.map(lambda x, y: (tf.image.random_flip_left_right(x), y),
                             num_parallel_calls=AUTOTUNE)
         if self.zero_padding:
-            data = data.map(lambda x: tf.image.resize_with_crop_or_pad(x,
+            data = data.map(lambda x, y: (tf.image.resize_with_crop_or_pad(x,
                                                                        self.zero_padding_shape[0],
-                                                                       self.zero_padding_shape[1]),
+                                                                       self.zero_padding_shape[1]), y),
                             num_parallel_calls=AUTOTUNE)
         if self.random_crop:
             size = [self.random_crop_shape[0], self.random_crop_shape[1], 3]
-            data = data.map(lambda x: tf.image.random_crop(x, size, seed=None, name=None),
+            data = data.map(lambda x, y: (tf.image.random_crop(x, size, seed=None, name=None), y),
                             num_parallel_calls=AUTOTUNE)
 
         return data
