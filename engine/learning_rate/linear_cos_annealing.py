@@ -23,6 +23,18 @@ class LinearCosAnnelingLrSchedule():
     
     
     def get_learning_rate(self, epoch):
+        """
+        Parameters
+        ----------
+        epoch : integer
+            Current epoch.
+
+        Returns
+        -------
+        lr : float
+            Current learning rate per epoch.
+
+        """
         
       if epoch <= self.lr_linear_final_epoch:
         lr = 0.2 * self.batch_size / 256 * (epoch + 1) / 25
