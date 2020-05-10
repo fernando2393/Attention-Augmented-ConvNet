@@ -5,9 +5,11 @@ Created on Sat May  9 20:06:06 2020
 @author: matte
 """
 
-class StepLearningRate():
-    
-    def get_learning_rate(self, epoch):
+
+class StepLearningRate:
+
+    @staticmethod
+    def get_learning_rate(epoch):
         """
         Parameters
         ----------
