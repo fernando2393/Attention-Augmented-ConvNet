@@ -1,18 +1,6 @@
 import tensorflow as tf
 
 
-# def learning_rate(init, epoch):
-#     optim_factor = 0
-#     if epoch > 90:
-#         optim_factor = 3
-#     elif epoch > 60:
-#         optim_factor = 2
-#     elif epoch > 30:
-#         optim_factor = 1
-#
-#     return init * math.pow(0.2, optim_factor)
-
-
 def wide_basic(inputs, in_planes, out_planes, stride):
     if stride != 1 or in_planes != out_planes:
         skip_c = tf.keras.layers.Conv2D(out_planes, kernel_size=1, strides=stride, use_bias=True,

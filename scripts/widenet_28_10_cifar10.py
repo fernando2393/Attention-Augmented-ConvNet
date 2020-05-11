@@ -2,7 +2,7 @@ import tensorflow as tf
 import cifar10_dataset.data_loader as ld
 import models.widenet28_10 as widenet
 from engine.training.custom_training import TrainingEngine
-from engine.learning_rate.step import StepLearningRate
+from engine.learning_rate.wide_learning_rate import WideLearningRate
 from tensorflow.keras.optimizers import Adam
 
 # Training parameters
@@ -27,18 +27,18 @@ def main():
     # Define the model architecture
     model = widenet.make_resnet_filter(inputs, depth=28, widen_factor=10)
     training_module = TrainingEngine(model)
-    training_module.lr_scheduler = StepLearningRate
+    training_module.lr_scheduler = WideLearningRate
     training_module.optimizer = Adam(lr=training_module.lr_scheduler.get_learning_rate(epoch=0))
     # Train de model
     training_module.fit(train_data,
                         validation_data,
                         batch_size=batch_size,
-                        epochs=60,
-                        data_augmentation=False)
+                        epochs=120,
+                        data_augmentation=True)
     # Perform evaluation over test data
     scores = training_module.evaluate(test_data)
     print('Test loss:', scores[1])
-    print('Test accuracy:', scores[0])
+    print('Test accuracy:', scores[0] * 100)
 
 
 if __name__ == "__main__":
