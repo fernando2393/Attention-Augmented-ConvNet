@@ -134,4 +134,8 @@ fabric.properties
 .idea
 test.py
 
+
+# Spyder #
+__pycache__
+
 # End of https://www.gitignore.io/api/macos,pycharm,visualstudiocode
