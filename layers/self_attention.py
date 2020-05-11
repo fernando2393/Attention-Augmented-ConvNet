@@ -12,7 +12,7 @@ from tensorflow.keras.layers import Conv2D
 
 class SelfAttention2D:
 
-    def __init__(self, N_h, depth_k, depth_v, relative=True):
+    def __init__(self, N_h, depth_k, depth_v, relative):
         """
         Parameters
         ----------
@@ -22,7 +22,7 @@ class SelfAttention2D:
             keys depth (all attention heads together). Same value for querys depth.
         depth_v_h : integer
             values depth (all attention heads together). 
-        relative : bool, optional
+        relative : boolean
         """
         self.N_h = N_h
         self.depth_k = depth_k
