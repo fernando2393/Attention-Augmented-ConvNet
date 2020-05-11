@@ -10,7 +10,7 @@ from self_attention import SelfAttention2D
 import tensorflow as tf
 
 
-def augmented_conv2d(X, F_out, k, depth_k, depth_v, N_h, relative):
+def augmented_conv2d(X, F_out, k, N_h, depth_k, depth_v, relative):
     """
     Augment conv2d by using self-attention features. It is possible that 
     all the features come from conv2d or from self-attention. This will 
@@ -55,4 +55,16 @@ def augmented_conv2d(X, F_out, k, depth_k, depth_v, N_h, relative):
         augmented_conv2d_out = tf.concat([conv2d_out, self_attent_out], axis=3)
         return augmented_conv2d_out 
 
+"""
+import sys 
 
+sys.path.append("..")
+from cifar10_dataset.data_loader import get_train_val_test_datasets
+
+x_train, y_train, x_val, y_val, x_test, y_test  = get_train_val_test_datasets(5000)
+
+
+a = tf.convert_to_tensor(x_train[:5])
+
+augmented_conv2d_out = augmented_conv2d(a, F_out=160, k=3, N_h=8, depth_k=160, depth_v=160, relative=True)
+"""

@@ -5,9 +5,14 @@ Created on Sun May  3 12:52:00 2020
 @author: MatteoDM, FernandoGS, FlaviaGV
 """
 
+import sys 
+
+sys.path.append("..")
+
 import numpy as np
 from tensorflow.keras.datasets import cifar10
 import tensorflow.keras
+from cifar10_dataset.utils import convert_to_tensor_dataset
 
 
 def preprocess_features(x_train, x_test, substract_pixel_mean=True):
@@ -41,8 +46,8 @@ def preprocess_features(x_train, x_test, substract_pixel_mean=True):
     return x_train, x_test
 
 
-def get_train_val_test_data(n_val_samples, categorical_targets=True,
-                            substract_pixel_mean=True, verbose=False):
+def get_train_val_test_datasets(n_val_samples, categorical_targets=True,
+                                substract_pixel_mean=True, verbose=False): 
     """
     CIFAR-10 ready for training, validating and testing the model/s. 
     
@@ -55,7 +60,9 @@ def get_train_val_test_data(n_val_samples, categorical_targets=True,
 
     Returns
     -------
-    (x_train, y_train), (x_val, y_val), (x_test, y_test)
+    train_data: tensor dataset 
+    val_data: tensor dataset 
+    test_data: tensor dataset 
 
     """
     (x_train, y_train), (x_test, y_test) = cifar10.load_data()
@@ -63,12 +70,14 @@ def get_train_val_test_data(n_val_samples, categorical_targets=True,
 
     if substract_pixel_mean:
         x_train, x_test, x_train_mean = preprocess_features(x_train, x_test, substract_pixel_mean)
-    else:
-        x_train, x_test = preprocess_features(x_train, x_test, substract_pixel_mean)
+    # else:
+    # x_train, x_test = preprocess_features(x_train, x_test, substract_pixel_mean)
 
     num_classes = len(np.unique(y_train))
 
     (x_train, y_train), (x_val, y_val) = split_train_dataset(x_train, y_train, n_val_samples)
+
+
 
     if categorical_targets:
         y_train = tensorflow.keras.utils.to_categorical(y_train, num_classes)
@@ -82,11 +91,13 @@ def get_train_val_test_data(n_val_samples, categorical_targets=True,
               "Shape y_validation: ", y_val.shape, "\n",
               "Shape x_test: ", x_test.shape, "\n",
               "Shape y_test: ", y_train.shape, "\n")
-
-    if substract_pixel_mean:
-        return (x_train, y_train), (x_val, y_val), (x_test, y_test), x_train_mean
-
-    return (x_train, y_train), (x_val, y_val), (x_test, y_test)
+        
+    #train_data, val_data, test_data = convert_to_tensor_dataset(x_train, y_train, 
+    #                                                                  x_val, y_val, 
+    #                                                                 x_test, y_test)    
+    
+    # return train_data, val_data, test_data 
+    return x_train, y_train, x_val, y_val, x_test, y_test 
 
 
 def split_train_dataset(x_train, y_train, n_val_samples):

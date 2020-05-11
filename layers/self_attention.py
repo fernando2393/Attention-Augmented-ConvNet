@@ -9,7 +9,6 @@ import tensorflow as tf
 import utils
 from tensorflow.keras.layers import Conv2D
 
-
 class SelfAttention2D:
 
     def __init__(self, N_h, depth_k, depth_v, relative):
@@ -208,14 +207,14 @@ class SelfAttention2D:
 """
 import sys 
 
-sys.path.insert(1, "..")
-from cifar10_dataset import data_loader
+sys.path.append("..")
+from cifar10_dataset.data_loader import get_train_val_test_datasets
 
-(x_train, y_train), (x_val, y_val), (x_test, y_test) = data_loader.get_train_val_test_data(5000)
+x_train, y_train, x_val, y_val, x_test, y_test  = get_train_val_test_datasets(5000)
 
-#x_train = tf.data.Dataset.from_tensor_slices(x_train)
+
 a = tf.convert_to_tensor(x_train[:5])
-attention_layer = SelfAttention2D(N_h=8, depth_k=160, depth_v=160)
-attention_layer.forward_pass(a)
 
+attention_layer = SelfAttention2D(N_h=8, depth_k=160, depth_v=160, relative=True)
+attention_layer.forward_pass(a)
 """
