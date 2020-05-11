@@ -35,18 +35,17 @@ class LinearCosAnnelingLrSchedule():
             Current learning rate per epoch.
 
         """
-        
-      if epoch <= self.lr_linear_final_epoch:
-        lr = 0.2 * self.batch_size / 256 * (epoch + 1) / 25
-        self.__cos_lr_passed_epochs = epoch + 1
-      else:
-        T_curr = epoch - self.__cos_lr_passed_epochs
-        T_i = self.cos_lr_T_mult**(self.__cos_lr_cycles) * self.cos_lr_T_0
-        if T_curr == T_i:
-            self.__cos_lr_cycles += 1
+        if epoch <= self.lr_linear_final_epoch:
+            lr = 0.2 * self.batch_size / 256 * (epoch + 1) / 25
             self.__cos_lr_passed_epochs = epoch + 1
-            
-        lr = self.cos_lr_n_min + 0.5 * (self.cos_lr_n_max - self.cos_lr_n_min) * (1 + np.cos(T_curr/(T_i) * np.pi))
-        
-      self.last_lr = lr
-      return lr
+        else:
+          T_curr = epoch - self.__cos_lr_passed_epochs
+          T_i = self.cos_lr_T_mult**(self.__cos_lr_cycles) * self.cos_lr_T_0
+          if T_curr == T_i:
+              self.__cos_lr_cycles += 1
+              self.__cos_lr_passed_epochs = epoch + 1
+              
+          lr = self.cos_lr_n_min + 0.5 * (self.cos_lr_n_max - self.cos_lr_n_min) * (1 + np.cos(T_curr/(T_i) * np.pi))
+          
+        self.last_lr = lr
+        return lr
