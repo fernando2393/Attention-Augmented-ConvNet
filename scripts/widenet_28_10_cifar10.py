@@ -1,9 +1,11 @@
+import sys
+sys.path.append("..")
 import tensorflow as tf
 import cifar10_dataset.data_loader as ld
 import models.widenet28_10 as widenet
 from engine.training.custom_training import TrainingEngine
 from engine.learning_rate.wide_learning_rate import WideLearningRate
-from tensorflow.keras.optimizers import Adam, SGD
+from tensorflow.keras.optimizers import SGD
 
 # Training parameters
 batch_size = 128
