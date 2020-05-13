@@ -206,32 +206,33 @@ class SelfAttention2D:
         return rel_logits
 
 
-
 """
-
 import sys 
 
 sys.path.append("..")
 from cifar10_dataset.data_loader import get_train_val_test_datasets
 
 from utils import plotting 
+import tensorflow as tf
+import matplotlib.pyplot as plt
+
 
 x_train, y_train, x_val, y_val, x_test, y_test, mean  = get_train_val_test_datasets(5000)
+x_train, y_train, x_val, y_val, x_test, y_test, mean  = get_train_val_test_datasets(5000)
 
+pixels_rows = [6,10,23,17]
+pixels_cols = [30,2,12,18]
 
-idx_sample = 26102
+idx_sample = 3 #26102
 
 sample = x_train[idx_sample:idx_sample+1]
 
-plotting.plot_sample(sample[0] , mean)
-
-
-pixels_x = [6,10,23,17]
-pixels_y = [30,2,12,18]
+plotting.plot_sample(sample[0] , mean, True, pixels_cols, pixels_rows)
 
 
 
 a = tf.convert_to_tensor(sample)
+
 
 attention_layer = SelfAttention2D(N_h=8, depth_k=160, depth_v=160, relative=True)
 attention_layer.forward_pass(a)
@@ -240,11 +241,12 @@ attention_maps = attention_layer.attention_maps
 # -- H, W, num_attention_heads, H, W
 tf.shape(attention_maps)
 
-#plotting.plot_attention_map_pixel(attention_maps, (30,6))
+# plotting.plot_attention_map_pixel(attention_maps, (30,6))
 
-plotting.plot_attention_maps_pixels(attention_maps, pixels_x, pixels_y) 
+plotting.plot_attention_maps_pixels(attention_maps, pixels_rows, pixels_cols)
+
+
 
 # -- H, W, num_attention_heads, H, W
 # attention_scores = attention_scores.permute(0, 1, 4, 2, 3)
-
 """

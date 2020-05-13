@@ -92,9 +92,9 @@ def plot_attention_map_pixel(attention_maps, pixel_coord, axes, idx_col_subplt):
     
     for idx_head in range(N_h):  
         att_map_head = attent_map_pixel[0, idx_head]
-        axes[idx_head][idx_col_subplt].pcolormesh(att_map_head, cmap='Oranges')
+        axes[idx_head][idx_col_subplt].imshow(att_map_head, cmap='Oranges')
         axes[idx_head][idx_col_subplt].set_axis_off()
-    
+    return axes
 
 
 def plot_attention_maps_pixels(attention_maps, pixels_x, pixels_y):
@@ -119,25 +119,28 @@ def plot_attention_maps_pixels(attention_maps, pixels_x, pixels_y):
     fig, axes = plt.subplots(nrows=N_h, ncols=n_points)
     for idx_pixel in range(n_points):
         pixel_coord = (pixels_y[idx_pixel], pixels_x[idx_pixel])
-        plot_attention_map_pixel(attention_maps, pixel_coord, axes, idx_pixel)
-    
+        axes = plot_attention_map_pixel(attention_maps, pixel_coord, axes, idx_pixel)
     
     ## Set axis labels of the subplot
-    add_axis_labels(axes, N_h, n_points)
+    # axes = add_axis_labels(axes, N_h, n_points)
     
     plt.ylabel("Pixels")
     plt.xlabel("Heads")
     plt.show()
 
-
+"""
 def add_axis_labels(axes_subplt, N_h, n_points):
     
     # set rows titles 
     for idx_head in range(N_h):
         title_rows = "head " + str(idx_head)
-        axes[0,idx_head].ylabel(title_rows)
+        axes_subplt[0,idx_head].ylabel(title_rows)
     
     # set rows titles 
     for idx_point in range(n_points): 
         title_cols = "pixel " + str(idx_point+1)
-        axes[idx_pixels,0].title()
+        axes_subplt[idx_point,0].title(title_cols)
+    return axes_subplt
+        
+"""
+        
