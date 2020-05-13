@@ -12,9 +12,11 @@ from tqdm import tqdm
 
 class TrainingEngine:
     
-    def __init__(self, model):
+    def __init__(self, model, set_custom_lr=True):
         
         self.model = model
+        
+        self.set_custom_lr = set_custom_lr
         
         self.lr_scheduler = LinearCosAnnelingLrSchedule(lr_linear_final_epoch=25)
 
@@ -91,7 +93,8 @@ class TrainingEngine:
             self.test_loss.reset_states()
             self.test_accuracy.reset_states()
             
-            self.optimizer.lr.assign(self.lr_scheduler.get_learning_rate(epoch))
+            if self.set_custom_lr:
+                self.optimizer.lr.assign(self.lr_scheduler.get_learning_rate(epoch))
         
             if shuffle:
                 epoch_train_data = train_data.shuffle(len(list(train_data)))
@@ -118,7 +121,7 @@ class TrainingEngine:
                                       self.optimizer.lr.numpy()))
                 
                 
-    def evaluate(self, test_data):
+    def evaluate(self, test_data, batch_size=100):
         """
         
 
@@ -135,6 +138,7 @@ class TrainingEngine:
             test loss.
 
         """
+        
         self.test_loss.reset_states()
         self.test_accuracy.reset_states()
         batched_test_data = test_data.batch(self.batch_size)

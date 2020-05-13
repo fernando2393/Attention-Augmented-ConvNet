@@ -5,8 +5,11 @@ Created on Mon May  4 19:17:23 2020
 @author: MatteoDM, FernandoGS, FlaviaGV
 """
 
+import sys
+sys.path.append("..")
+
 import tensorflow as tf
-import tf_utils
+from layers import tf_utils
 from tensorflow.keras.layers import Conv2D
 
 
@@ -144,9 +147,12 @@ class SelfAttention2D:
         """
         # Relative logits in width dimension first.
         rel_embedding_w = tf.compat.v1.get_variable('r_width', shape=(2*W-1, self.depth_k_h), 
-                                          initializer = tf.random_normal_initializer(self.depth_k_h**-0.5))         # TF 2.0 is tf.Variable 
+                                         initializer = tf.random_normal_initializer(self.depth_k_h**-0.5))         # TF 2.0 is tf.Variable 
         
-        
+        #rel_embedding_w = tf.Variable(tf.random.normal((2*W-1, self.depth_k_h), mean = self.depth_k_h**-0.5), trainable=True, name='r_width')  
+        #rel_embeddings_h = tf.Variable(tf.random.normal((2*H-1, self.depth_k_h), mean = self.depth_k_h**-0.5), trainable=True, name='r_height')  
+
+        # compat.v1.get_variable
         # [B, N_h, HW, HW]
         rel_logits_w = self.relative_logits_1d(q_h, rel_embedding_w, H, W, [0, 1, 2, 4, 3, 5])
         
