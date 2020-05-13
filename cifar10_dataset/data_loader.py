@@ -12,8 +12,9 @@ sys.path.append("..")
 import numpy as np
 from tensorflow.keras.datasets import cifar10
 import tensorflow.keras
-from cifar10_dataset.utils import convert_to_tensor_dataset
 
+
+np.random.seed(123)
 
 def preprocess_features(x_train, x_test, substract_pixel_mean=True):
     """
@@ -46,8 +47,7 @@ def preprocess_features(x_train, x_test, substract_pixel_mean=True):
     return x_train, x_test
 
 
-def get_train_val_test_datasets(n_val_samples, categorical_targets=True,
-                                substract_pixel_mean=True, verbose=False): 
+def get_train_val_test_datasets(n_val_samples, categorical_targets=True, verbose=False): 
     """
     CIFAR-10 ready for training, validating and testing the model/s. 
     
@@ -55,7 +55,6 @@ def get_train_val_test_datasets(n_val_samples, categorical_targets=True,
     ----------
     n_val_samples : integer
     categorical_targets : boolean, default=True
-    substract_pixel_mean : boolean, default=True
     verbose : integer, default=False
 
     Returns
@@ -68,8 +67,8 @@ def get_train_val_test_datasets(n_val_samples, categorical_targets=True,
     (x_train, y_train), (x_test, y_test) = cifar10.load_data()
     x_train_mean = 0
 
-    if substract_pixel_mean:
-        x_train, x_test, x_train_mean = preprocess_features(x_train, x_test, substract_pixel_mean)
+    x_train, x_test, x_train_mean = preprocess_features(x_train, x_test, 
+                                                        substract_pixel_mean=True)
     # else:
     # x_train, x_test = preprocess_features(x_train, x_test, substract_pixel_mean)
 
@@ -97,7 +96,7 @@ def get_train_val_test_datasets(n_val_samples, categorical_targets=True,
     #                                                                 x_test, y_test)    
     
     # return train_data, val_data, test_data 
-    return x_train, y_train, x_val, y_val, x_test, y_test 
+    return x_train, y_train, x_val, y_val, x_test, y_test, x_train_mean
 
 
 def split_train_dataset(x_train, y_train, n_val_samples):

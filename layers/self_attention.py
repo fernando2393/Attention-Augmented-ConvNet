@@ -6,8 +6,9 @@ Created on Mon May  4 19:17:23 2020
 """
 
 import tensorflow as tf
-import utils
+import tf_utils
 from tensorflow.keras.layers import Conv2D
+
 
 class SelfAttention2D:
 
@@ -29,7 +30,7 @@ class SelfAttention2D:
         self.depth_k_h = self.depth_k // self.N_h
         self.depth_v_h = self.depth_v // self.N_h
         self.relative = relative
-
+        
     
     def forward_pass(self, inputs): # self_attention_2d
         """
@@ -45,10 +46,10 @@ class SelfAttention2D:
           Multi-head attention features. 
 
         """
-        _, H, W, _ = utils.get_img_shape(inputs)
+        _, H, W, _ = tf_utils.get_img_shape(inputs)
 
         flatten_hw = lambda x, d: tf.reshape(x, [-1, self.N_h, H*W, d])
-
+        
         # Compute q, k, v
         total_depth = 2 * self.depth_k + self.depth_v
         k_q_v = Conv2D(filters = total_depth, kernel_size = 1)(inputs) # point-wise convolution
@@ -70,8 +71,11 @@ class SelfAttention2D:
         
         # logits_scaled = logits/(self.depth_k_h ** -0.5)
         # Attention map
-        weights = tf.nn.softmax(logits)
-        O_h = tf.matmul(weights, flatten_hw(v_h, self.depth_v_h))
+        self.weights = tf.nn.softmax(logits)
+        
+        self.attention_maps = tf.reshape(self.weights, [-1, self.N_h, H, W, H, W])
+        
+        O_h = tf.matmul(self.weights, flatten_hw(v_h, self.depth_v_h))
         O_h = tf.reshape(O_h, [-1, self.N_h, H, W, self.depth_v_h])
         O = self.combine_heads_2d(O_h)
 
@@ -93,7 +97,7 @@ class SelfAttention2D:
         -------
         inputs_h: tensor/s with shape=[n_samples_batch, n_heads, height, width, depth_per_head]        
         """
-        B, H, W, d = utils.get_img_shape(inputs)
+        B, H, W, d = tf_utils.get_img_shape(inputs)
         ret_shape = [B, H, W, self.N_h, d//self.N_h]
         split = tf.reshape(inputs, ret_shape)
         inputs_h = tf.transpose(split, [0, 3, 1, 2, 4])
@@ -114,8 +118,8 @@ class SelfAttention2D:
         inputs: tensor/s with shape=[n_samples_batch, height, width, total_depth]
         """
         transposed = tf.transpose(inputs_h, [0, 2, 3, 1, 4])
-        _, channels = utils.get_img_shape(transposed)[-2:]
-        ret_shape = utils.get_img_shape(transposed)[:-2] + [self.N_h * channels]
+        _, channels = tf_utils.get_img_shape(transposed)[-2:]
+        ret_shape = tf_utils.get_img_shape(transposed)[:-2] + [self.N_h * channels]
         inputs = tf.reshape(transposed, ret_shape)
         return inputs
     
@@ -188,7 +192,7 @@ class SelfAttention2D:
         
         # Collapse height and heads
         rel_logits = tf.reshape(rel_logits, [-1, self.N_h*H, W, 2*W-1])
-        rel_logits = utils.rel_to_abs(rel_logits)
+        rel_logits = tf_utils.rel_to_abs(rel_logits)
         
         # Shape it and tile height times
         rel_logits = tf.reshape(rel_logits, [-1, self.N_h, H, W, W])
@@ -203,18 +207,44 @@ class SelfAttention2D:
 
 
 
-
 """
+
 import sys 
 
 sys.path.append("..")
 from cifar10_dataset.data_loader import get_train_val_test_datasets
 
-x_train, y_train, x_val, y_val, x_test, y_test  = get_train_val_test_datasets(5000)
+from utils import plotting 
+
+x_train, y_train, x_val, y_val, x_test, y_test, mean  = get_train_val_test_datasets(5000)
 
 
-a = tf.convert_to_tensor(x_train[:5])
+idx_sample = 26102
+
+sample = x_train[idx_sample:idx_sample+1]
+
+plotting.plot_sample(sample[0] , mean)
+
+
+pixels_x = [6,10,23,17]
+pixels_y = [30,2,12,18]
+
+
+
+a = tf.convert_to_tensor(sample)
 
 attention_layer = SelfAttention2D(N_h=8, depth_k=160, depth_v=160, relative=True)
 attention_layer.forward_pass(a)
+
+attention_maps = attention_layer.attention_maps
+# -- H, W, num_attention_heads, H, W
+tf.shape(attention_maps)
+
+#plotting.plot_attention_map_pixel(attention_maps, (30,6))
+
+plotting.plot_attention_maps_pixels(attention_maps, pixels_x, pixels_y) 
+
+# -- H, W, num_attention_heads, H, W
+# attention_scores = attention_scores.permute(0, 1, 4, 2, 3)
+
 """
