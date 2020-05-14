@@ -10,13 +10,14 @@ from tensorflow.keras.optimizers import SGD
 # Training parameters
 batch_size = 128
 validation_size = 5000
+augmented = 10  # Number of convolutional augmented layers
 
 
 def main():
     print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
     tf.debugging.set_log_device_placement(True)
     # Data loading
-    x_train, y_train, x_val, y_val, x_test, y_test, _ = ld.get_train_val_test_datasets(validation_size)
+    (x_train, y_train), (x_val, y_val), (x_test, y_test), _ = ld.get_train_val_test_datasets(validation_size)
     # Set TF random seed to improve reproducibility
     tf.random.set_seed(1234)
     # Obtain training, validation and test data
@@ -27,7 +28,7 @@ def main():
     input_shape = x_train.shape[1:]
     inputs = tf.keras.Input(shape=input_shape)
     # Define the model architecture
-    model = widenet.make_resnet_filter(inputs, depth=28, widen_factor=10)
+    model = widenet.make_resnet_filter(inputs, depth=28, widen_factor=10, augmented=augmented)
     training_module = TrainingEngine(model)
     training_module.lr_scheduler = WideLearningRate
     training_module.optimizer = SGD(lr=training_module.lr_scheduler.get_learning_rate(epoch=0),
