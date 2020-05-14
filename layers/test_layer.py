@@ -272,19 +272,19 @@ class AttentionAugmentation2D(Layer):
         return dict(list(base_config.items()) + list(config.items()))
 
 
-def augmented_conv2d(ip, F_out, kernel_size=(3, 3), strides=(1, 1),
+def augmented_conv2d(ip, f_out, kernel_size=(3, 3), strides=(1, 1),
                      k=0.2, v=0.2, num_heads=8, relative_encodings=True):
     """
     Builds an Attention Augmented Convolution block.
     Args:
         ip: keras tensor.
-        filters: number of output filters.
+        f_out: number of output filters.
         kernel_size: convolution kernel size.
         strides: strides of the convolution.
-        depth_k: float or int. Number of filters for k.
+        k: float or int. Number of filters for k.
             Computes the number of filters for `v`.
             If passed as float, computed as `filters * depth_k`.
-        depth_v: float or int. Number of filters for v.
+        v: float or int. Number of filters for v.
             Computes the number of filters for `k`.
             If passed as float, computed as `filters * depth_v`.
         num_heads: int. Number of attention heads.
@@ -297,10 +297,10 @@ def augmented_conv2d(ip, F_out, kernel_size=(3, 3), strides=(1, 1),
     # input_shape = K.int_shape(ip)
     channel_axis = 1 if K.image_data_format() == 'channels_first' else -1
 
-    depth_k, depth_v = _normalize_depth_vars(k, v, F_out)
+    depth_k, depth_v = _normalize_depth_vars(k, v, f_out)
 
 
-    n_conv_features = F_out - depth_v
+    n_conv_features = f_out - depth_v
     
     
     if n_conv_features == 0:

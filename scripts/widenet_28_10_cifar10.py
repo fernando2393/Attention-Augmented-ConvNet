@@ -10,6 +10,7 @@ from tensorflow.keras.optimizers import SGD
 # Training parameters
 batch_size = 128
 validation_size = 5000
+augmented = True  # Set to true to implement augmented conv2D layers
 
 
 def main():
@@ -27,7 +28,7 @@ def main():
     input_shape = x_train.shape[1:]
     inputs = tf.keras.Input(shape=input_shape)
     # Define the model architecture
-    model = widenet.make_resnet_filter(inputs, depth=28, widen_factor=10)
+    model = widenet.make_resnet_filter(inputs, depth=28, widen_factor=10, augmented=augmented)
     training_module = TrainingEngine(model)
     training_module.lr_scheduler = WideLearningRate
     training_module.optimizer = SGD(lr=training_module.lr_scheduler.get_learning_rate(epoch=0),
