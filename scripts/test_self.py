@@ -22,8 +22,8 @@ from engine.learning_rate.step import StepLearningRate
 from tensorflow.keras.optimizers import Adam, SGD
 import tensorflow as tf
 
-import tensorflow.compat.v1 as tf
-tf.disable_v2_behavior()
+#import tensorflow.compat.v1 as tf
+#tf.disable_v2_behavior()
 
 validation_size = 5000
 batch_size = 128
