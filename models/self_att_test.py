@@ -5,9 +5,9 @@ Created on Wed May 13 11:51:01 2020
 @author: matte
 """
 
-#from layers.test_layer import augmented_conv2d
+from layers.test_layer import augmented_conv2d
 from layers.self_attention import SelfAttention2D
-from layers.augmented_conv2d import augmented_conv2d
+#from layers.augmented_conv2d import augmented_conv2d
 from tensorflow.keras.layers import BatchNormalization, Activation, Flatten
 from tensorflow.keras.layers import Dense, Conv2D, Input
 from tensorflow.keras.models import Model
@@ -54,13 +54,13 @@ def augmented_resnet_layer(inputs,
 def aug_con_2d(input_shape, num_classes):
     
     
-    ip = Input(shape=(32, 32, 3))
-    sa = SelfAttention2D(2, 2, 2, True)
+    ip = Input(shape=input_shape)
+    #sa = SelfAttention2D(2, 2, 2, True)
     #x = sa.forward_pass(ip)
-    # x = augmented_conv2d(ip, filters=20, kernel_size=(3, 3),
-    #                       depth_k=0.2, depth_v=0.2,  # dk/v (0.2) * f_out (20) = 4
-    #                       num_heads=4, relative_encodings=False)
-    x = augmented_conv2d(ip, 20, 3, 1, 4, depth_k=4, depth_v=4, relative=True)
+    x = augmented_conv2d(ip, F_out=20, kernel_size=(3, 3),
+                          k=0.2, v=0.2,  # k and v have to be floating point (if is 1, convert to float). Always convert to float to be sure
+                          num_heads=4, relative_encodings=True)
+    #x = augmented_conv2d(ip, 20, 3, 1, 4, depth_k=4, depth_v=4, relative=True)
     x = Flatten()(x)
 
     outputs = Dense(num_classes,
@@ -93,3 +93,5 @@ def aug_con_2d(input_shape, num_classes):
     model = Model(inputs=inputs, outputs=x)
     return model
     '''
+    
+    

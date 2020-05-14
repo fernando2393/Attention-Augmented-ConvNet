@@ -238,10 +238,12 @@ class AttentionAugmentation2D(Layer):
         shape = K.shape(x)
         shape = [shape[i] for i in range(3)]
         B, Nh, L, = shape
-        col_pad = K.zeros(K.stack([B, Nh, L, 1]))
+        col_pad = tf.zeros((B, Nh, L, 1))
+        #col_pad = K.zeros(K.stack([B, Nh, L, 1]))
         x = K.concatenate([x, col_pad], axis=3)
         flat_x = K.reshape(x, [B, Nh, L * 2 * L])
-        flat_pad = K.zeros(K.stack([B, Nh, L - 1]))
+        #flat_pad = K.zeros(K.stack([B, Nh, L - 1]))
+        flat_pad = tf.zeros((B, Nh, L - 1))
         flat_x_padded = K.concatenate([flat_x, flat_pad], axis=2)
         final_x = K.reshape(flat_x_padded, [B, Nh, L + 1, 2 * L - 1])
         final_x = final_x[:, :, :L, L - 1:]
@@ -270,8 +272,8 @@ class AttentionAugmentation2D(Layer):
         return dict(list(base_config.items()) + list(config.items()))
 
 
-def augmented_conv2d(ip, filters, kernel_size=(3, 3), strides=(1, 1),
-                     depth_k=0.2, depth_v=0.2, num_heads=8, relative_encodings=True):
+def augmented_conv2d(ip, F_out, kernel_size=(3, 3), strides=(1, 1),
+                     k=0.2, v=0.2, num_heads=8, relative_encodings=True):
     """
     Builds an Attention Augmented Convolution block.
     Args:
@@ -295,18 +297,30 @@ def augmented_conv2d(ip, filters, kernel_size=(3, 3), strides=(1, 1),
     # input_shape = K.int_shape(ip)
     channel_axis = 1 if K.image_data_format() == 'channels_first' else -1
 
-    depth_k, depth_v = _normalize_depth_vars(depth_k, depth_v, filters)
+    depth_k, depth_v = _normalize_depth_vars(k, v, F_out)
 
-    conv_out = _conv_layer(filters - depth_v, kernel_size, strides)(ip)
 
-    # Augmented Attention Block
-    qkv_conv = _conv_layer(2 * depth_k + depth_v, (1, 1), strides)(ip)
-    attn_out = AttentionAugmentation2D(depth_k, depth_v, num_heads, relative_encodings)(qkv_conv)
-    attn_out = _conv_layer(depth_v, kernel_size=(1, 1))(attn_out)
-
-    output = concatenate([conv_out, attn_out], axis=channel_axis)
-    output = BatchNormalization()(output)
-    return output
+    n_conv_features = F_out - depth_v
+    
+    
+    if n_conv_features == 0:
+        # Augmented Attention Block
+        qkv_conv = _conv_layer(2 * depth_k + depth_v, (1, 1), strides)(ip)
+        attn_out = AttentionAugmentation2D(depth_k, depth_v, num_heads, relative_encodings)(qkv_conv)
+        attn_out = _conv_layer(depth_v, kernel_size=(1, 1))(attn_out)
+        return attn_out
+    elif depth_v == 0:
+        conv_out = _conv_layer(n_conv_features, kernel_size, strides)(ip)
+        return conv_out
+    else:
+        conv_out = _conv_layer(n_conv_features, kernel_size, strides)(ip)
+        # Augmented Attention Block
+        qkv_conv = _conv_layer(2 * depth_k + depth_v, (1, 1), strides)(ip)
+        attn_out = AttentionAugmentation2D(depth_k, depth_v, num_heads, relative_encodings)(qkv_conv)
+        attn_out = _conv_layer(depth_v, kernel_size=(1, 1))(attn_out)
+        output = concatenate([conv_out, attn_out], axis=channel_axis)
+        #output = BatchNormalization()(output)
+        return output
 
 
 # if __name__ == '__main__':
