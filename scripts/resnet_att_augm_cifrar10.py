@@ -9,8 +9,8 @@ import sys
 sys.path.append("..")
 
 import tensorflow.keras
-from models.resnet50 import resnet50_v1
-from models.augmented_resnet import resnet50_att_augmented_v1
+#from models.resnet50 import resnet50_v1
+from models.resnet34_augmented_conv import resnet34_att_augmented
 from cifar10_dataset.data_loader import get_train_val_test_datasets
 import numpy as np
 from preprocessing.augmentation import Augment2D
@@ -26,7 +26,7 @@ epochs = 220
 
 if __name__ == "__main__":
         
-    x_train, y_train, x_val, y_val, x_test, y_test = get_train_val_test_datasets(validation_size)
+    x_train, y_train, x_val, y_val, x_test, y_test, _ = get_train_val_test_datasets(validation_size)
     
     print("Data loaded.")
     
@@ -37,9 +37,9 @@ if __name__ == "__main__":
     input_shape = x_train.shape[1:]
     n_colors = x_train.shape[3]
     depth = n_colors * 6 + 2
-    k = 0.2
-    v = 0.1
-    model = resnet50_att_augmented_v1(input_shape, depth, v, k, n_heads=8)
+    k = 0.25
+    v = 0.25
+    model = resnet34_att_augmented(input_shape, 10, v, k, n_heads=8)
 
 
     training_module = TrainingEngine(model)
@@ -49,9 +49,11 @@ if __name__ == "__main__":
                           validation_data,
                           batch_size=batch_size,
                           epochs=epochs,
-                          data_augmentation=False)
+                          data_augmentation=True)
 
     
     scores = training_module.evaluate(test_data)
     print('Test loss:', scores[1])
     print('Test accuracy:', scores[0])
+    
+    model.save_weights("./resnet34_220_adam_step_atte_augm.ckpt")
