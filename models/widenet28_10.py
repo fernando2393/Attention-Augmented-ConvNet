@@ -16,7 +16,7 @@ def layer_selection(augmented_cnt, not_augmented_layers, inputs, filters, kernel
 
 
 def wide_basic(inputs, in_planes, out_planes, stride, augmented):
-    if stride != 1 or in_planes != out_planes and augmented:
+    if (stride != 1 or in_planes != out_planes) and augmented:
         skip_c = augmented_conv2d(inputs, out_planes, kernel_size=1, strides=stride, k=2*0.1, v=0.1)
     elif stride != 1 or in_planes != out_planes:
         skip_c = tf.keras.layers.Conv2D(out_planes, kernel_size=1, strides=stride, use_bias=True,
@@ -55,8 +55,8 @@ def make_resnet_filter(inputs, depth=28, widen_factor=10, num_classes=10, augmen
     print('| Wide-Resnet %dx%d' % (depth, k))
     nstages = [16, 16 * k, 32 * k, 64 * k]
     x = tf.keras.layers.Conv2D(nstages[0], kernel_size=3, strides=1, use_bias=True, padding='same')(inputs)
-    x = wide_layer(x, nstages[0], nstages[1], n, stride=1, augmented=augmented)
-    x = wide_layer(x, nstages[1], nstages[2], n, stride=2, augmented=augmented)
+    x = wide_layer(x, nstages[0], nstages[1], n, stride=1, augmented=False)
+    x = wide_layer(x, nstages[1], nstages[2], n, stride=2, augmented=False)
     x = wide_layer(x, nstages[2], nstages[3], n, stride=2, augmented=augmented)
     x = tf.keras.layers.BatchNormalization(momentum=0.9, scale=True, center=True, trainable=True)(x)
     x = tf.nn.relu(x)
@@ -64,4 +64,4 @@ def make_resnet_filter(inputs, depth=28, widen_factor=10, num_classes=10, augmen
     x = tf.reshape(x, (-1, 640))
     outputs = tf.keras.layers.Dense(num_classes, activation='softmax')(x)
 
-    return tf.keras.Model(inputs=inputs, outputs=outputs)
+    return tf.keras.Model(inputs=inputs, outputs=[outputs])

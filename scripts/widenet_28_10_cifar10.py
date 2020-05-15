@@ -6,6 +6,7 @@ import models.widenet28_10 as widenet
 from engine.training.custom_training import TrainingEngine
 from engine.learning_rate.wide_learning_rate import WideLearningRate
 from tensorflow.keras.optimizers import SGD
+from os import path
 
 # Training parameters
 batch_size = 128
@@ -29,6 +30,9 @@ def main():
     inputs = tf.keras.Input(shape=input_shape)
     # Define the model architecture
     model = widenet.make_resnet_filter(inputs, depth=28, widen_factor=10, augmented=augmented)
+    print(model.summary())
+    if path.isfile("widenet_weights.ckpt"):
+        model.load_weights("widenet_weights.ckpt")
     training_module = TrainingEngine(model)
     training_module.lr_scheduler = WideLearningRate
     training_module.optimizer = SGD(lr=training_module.lr_scheduler.get_learning_rate(epoch=0),
@@ -39,6 +43,7 @@ def main():
                         batch_size=batch_size,
                         epochs=60,
                         data_augmentation=True)
+    model.save_weights("widenet_weights.ckpt")
     # Perform evaluation over test data
     scores = training_module.evaluate(test_data)
     print('Test loss:', scores[1])
