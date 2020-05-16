@@ -132,7 +132,7 @@ class AttentionAugmentation2D(Layer):
     def call(self, inputs, **kwargs):
         if self.axis == 1:
             # If channels first, force it to be channels last for these ops
-            inputs = K.permute_dimensions(inputs, [0, 2, 3, 1])
+            inputs = tf.permute_dimensions(inputs, [0, 2, 3, 1])
 
         q, k, v = tf.split(inputs, [self.depth_k, self.depth_k, self.depth_v], axis=-1)
 
@@ -147,9 +147,9 @@ class AttentionAugmentation2D(Layer):
         # [Batch, num_heads, height * width, depth_k or depth_v] if axis == -1
         qk_shape = [self._batch, self.num_heads, self._height * self._width, self.depth_k // self.num_heads]
         v_shape = [self._batch, self.num_heads, self._height * self._width, self.depth_v // self.num_heads]
-        flat_q = K.reshape(q, K.stack(qk_shape))
-        flat_k = K.reshape(k, K.stack(qk_shape))
-        flat_v = K.reshape(v, K.stack(v_shape))
+        flat_q = tf.reshape(q, tf.stack(qk_shape))
+        flat_k = tf.reshape(k, tf.stack(qk_shape))
+        flat_v = tf.reshape(v, tf.stack(v_shape))
 
         # [Batch, num_heads, HW, HW]
         logits = tf.matmul(flat_q, flat_k, transpose_b=True)
@@ -160,12 +160,15 @@ class AttentionAugmentation2D(Layer):
             logits += h_rel_logits
             logits += w_rel_logits
 
-        weights = K.softmax(logits, axis=-1)
+        weights = tf.nn.softmax(logits, axis=-1)
+        maps = tf.identity(weights)
         attn_out = tf.matmul(weights, flat_v)
-
+        
+        
         attn_out_shape = [self._batch, self.num_heads, self._height, self._width, self.depth_v // self.num_heads]
-        attn_out_shape = K.stack(attn_out_shape)
-        attn_out = K.reshape(attn_out, attn_out_shape)
+        attn_out_shape = tf.stack(attn_out_shape)
+        attn_out = tf.reshape(attn_out, attn_out_shape)
+        
         attn_out = self.combine_heads_2d(attn_out)
         # [batch, height, width, depth_v]
 
@@ -175,7 +178,7 @@ class AttentionAugmentation2D(Layer):
 
         attn_out.set_shape(self.compute_output_shape(self._shape))
 
-        return attn_out
+        return attn_out, maps
 
     def compute_output_shape(self, input_shape):
         output_shape = list(input_shape)
@@ -183,7 +186,7 @@ class AttentionAugmentation2D(Layer):
         return tuple(output_shape)
 
     def split_heads_2d(self, ip):
-        tensor_shape = K.shape(ip)
+        tensor_shape = tf.shape(ip)
 
         # batch, height, width, channels for axis = -1
         tensor_shape = [tensor_shape[i] for i in range(len(self._shape))]
@@ -198,15 +201,15 @@ class AttentionAugmentation2D(Layer):
         self._height = height
         self._width = width
 
-        ret_shape = K.stack([batch, height, width,  self.num_heads, channels // self.num_heads])
-        split = K.reshape(ip, ret_shape)
-        transpose_axes = (0, 3, 1, 2, 4)
-        split = K.permute_dimensions(split, transpose_axes)
+        ret_shape = tf.stack([batch, height, width,  self.num_heads, channels // self.num_heads])
+        split = tf.reshape(ip, ret_shape)
+        transpose_axes = [0, 3, 1, 2, 4]
+        split = tf.transpose(split, transpose_axes)
 
         return split
 
     def relative_logits(self, q):
-        shape = K.shape(q)
+        shape = tf.shape(q)
         # [batch, num_heads, H, W, depth_v]
         shape = [shape[i] for i in range(5)]
 
@@ -217,7 +220,7 @@ class AttentionAugmentation2D(Layer):
                                                transpose_mask=[0, 1, 2, 4, 3, 5])
 
         rel_logits_h = self.relative_logits_1d(
-            K.permute_dimensions(q, [0, 1, 3, 2, 4]),
+            tf.transpose(q, [0, 1, 3, 2, 4]),
             self.key_relative_h, width, height,
             transpose_mask=[0, 1, 4, 2, 5, 3])
 
@@ -225,41 +228,41 @@ class AttentionAugmentation2D(Layer):
 
     def relative_logits_1d(self, q, rel_k, H, W, transpose_mask):
         rel_logits = tf.einsum('bhxyd,md->bhxym', q, rel_k)
-        rel_logits = K.reshape(rel_logits, [-1, self.num_heads * H, W, 2 * W - 1])
+        rel_logits = tf.reshape(rel_logits, [-1, self.num_heads * H, W, 2 * W - 1])
         rel_logits = self.rel_to_abs(rel_logits)
-        rel_logits = K.reshape(rel_logits, [-1, self.num_heads, H, W, W])
-        rel_logits = K.expand_dims(rel_logits, axis=3)
-        rel_logits = K.tile(rel_logits, [1, 1, 1, H, 1, 1])
-        rel_logits = K.permute_dimensions(rel_logits, transpose_mask)
-        rel_logits = K.reshape(rel_logits, [-1, self.num_heads, H * W, H * W])
+        rel_logits = tf.reshape(rel_logits, [-1, self.num_heads, H, W, W])
+        rel_logits = tf.expand_dims(rel_logits, axis=3)
+        rel_logits = tf.tile(rel_logits, [1, 1, 1, H, 1, 1])
+        rel_logits = tf.transpose(rel_logits, transpose_mask)
+        rel_logits = tf.reshape(rel_logits, [-1, self.num_heads, H * W, H * W])
         return rel_logits
 
     def rel_to_abs(self, x):
-        shape = K.shape(x)
+        shape = tf.shape(x)
         shape = [shape[i] for i in range(3)]
         B, Nh, L, = shape
         col_pad = tf.zeros((B, Nh, L, 1))
         #col_pad = K.zeros(K.stack([B, Nh, L, 1]))
-        x = K.concatenate([x, col_pad], axis=3)
-        flat_x = K.reshape(x, [B, Nh, L * 2 * L])
+        x = tf.concat([x, col_pad], axis=3)
+        flat_x = tf.reshape(x, [B, Nh, L * 2 * L])
         #flat_pad = K.zeros(K.stack([B, Nh, L - 1]))
         flat_pad = tf.zeros((B, Nh, L - 1))
-        flat_x_padded = K.concatenate([flat_x, flat_pad], axis=2)
-        final_x = K.reshape(flat_x_padded, [B, Nh, L + 1, 2 * L - 1])
+        flat_x_padded = tf.concat([flat_x, flat_pad], axis=2)
+        final_x = tf.reshape(flat_x_padded, [B, Nh, L + 1, 2 * L - 1])
         final_x = final_x[:, :, :L, L - 1:]
         return final_x
 
     def combine_heads_2d(self, inputs):
         # [batch, num_heads, height, width, depth_v // num_heads]
-        transposed = K.permute_dimensions(inputs, [0, 2, 3, 1, 4])
+        transposed = tf.transpose(inputs, [0, 2, 3, 1, 4])
         # [batch, height, width, num_heads, depth_v // num_heads]
-        shape = K.shape(transposed)
+        shape = tf.shape(transposed)
         shape = [shape[i] for i in range(5)]
 
         a, b = shape[-2:]
-        ret_shape = K.stack(shape[:-2] + [a * b])
+        ret_shape = tf.stack(shape[:-2] + [a * b])
         # [batch, height, width, depth_v]
-        return K.reshape(transposed, ret_shape)
+        return tf.reshape(transposed, ret_shape)
 
     def get_config(self):
         config = {
@@ -306,7 +309,7 @@ def augmented_conv2d(ip, f_out, kernel_size=(3, 3), strides=(1, 1),
     if n_conv_features == 0:
         # Augmented Attention Block
         qkv_conv = _conv_layer(2 * depth_k + depth_v, (1, 1), strides)(ip)
-        attn_out = AttentionAugmentation2D(depth_k, depth_v, num_heads, relative_encodings)(qkv_conv)
+        attn_out, maps = AttentionAugmentation2D(depth_k, depth_v, num_heads, relative_encodings)(qkv_conv)
         attn_out = _conv_layer(depth_v, kernel_size=(1, 1))(attn_out)
         return attn_out
     elif depth_v == 0:
@@ -316,7 +319,7 @@ def augmented_conv2d(ip, f_out, kernel_size=(3, 3), strides=(1, 1),
         conv_out = _conv_layer(n_conv_features, kernel_size, strides)(ip)
         # Augmented Attention Block
         qkv_conv = _conv_layer(2 * depth_k + depth_v, (1, 1), strides)(ip)
-        attn_out = AttentionAugmentation2D(depth_k, depth_v, num_heads, relative_encodings)(qkv_conv)
+        attn_out, maps = AttentionAugmentation2D(depth_k, depth_v, num_heads, relative_encodings)(qkv_conv)
         attn_out = _conv_layer(depth_v, kernel_size=(1, 1))(attn_out)
         output = concatenate([conv_out, attn_out], axis=channel_axis)
         #output = BatchNormalization()(output)
