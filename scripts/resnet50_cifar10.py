@@ -2,41 +2,39 @@
 """
 Created on Thu May  7 22:19:21 2020
 
-@author: matte
+@author: MatteoDM, FernandoGS, FlaviaGV
 """
 
 import sys
 sys.path.append("..")
 
-import tensorflow.keras
-from models.resnet50 import resnet50_v1
-from cifar10_dataset.data_loader import get_train_val_test_data
-import numpy as np
-from preprocessing.augmentation import Augment2D
-from engine.learning_rate.linear_cos_annealing import LinearCosAnnelingLrSchedule
+from models.resnet50 import resnet34
+from cifar10_dataset.data_loader import get_train_val_test_datasets
 from engine.training.custom_training import TrainingEngine
 from engine.learning_rate.step import StepLearningRate
 from tensorflow.keras.optimizers import Adam
 import tensorflow as tf
 
+
 validation_size = 5000
-batch_size = 128 
+batch_size = 128
 epochs = 220
 
 if __name__ == "__main__":
-        
-    (x_train, y_train), (x_val, y_val), (x_test, y_test), _ = get_train_val_test_data(validation_size)
-    
+
+    x_train, y_train, x_val, y_val, x_test, y_test = get_train_val_test_datasets(validation_size)
+
     print("Data loaded.")
-    
+
     train_data = tf.data.Dataset.from_tensor_slices((x_train, y_train))
     validation_data = tf.data.Dataset.from_tensor_slices((x_val, y_val))
     test_data = tf.data.Dataset.from_tensor_slices((x_test, y_test))
-    
+
     input_shape = x_train.shape[1:]
     n_colors = x_train.shape[3]
     depth = n_colors * 6 + 2
-    model = resnet50_v1(input_shape=input_shape, depth=depth)
+    model = resnet34(input_shape, 10)
+    #model = ResNet34(10)
 
 
     training_module = TrainingEngine(model)
@@ -46,9 +44,11 @@ if __name__ == "__main__":
                           validation_data,
                           batch_size=batch_size,
                           epochs=epochs,
-                          data_augmentation=False)
+                          data_augmentation=True)
 
-    
+
     scores = training_module.evaluate(test_data)
     print('Test loss:', scores[1])
     print('Test accuracy:', scores[0])
+    
+    model.save_weights("./resnet34_220_adam_step_augm.ckpt")

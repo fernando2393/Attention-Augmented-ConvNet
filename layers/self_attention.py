@@ -5,8 +5,11 @@ Created on Mon May  4 19:17:23 2020
 @author: MatteoDM, FernandoGS, FlaviaGV
 """
 
+import sys
+sys.path.append("..")
+
 import tensorflow as tf
-import tf_utils
+from layers import tf_utils
 from tensorflow.keras.layers import Conv2D
 
 
@@ -144,9 +147,12 @@ class SelfAttention2D:
         """
         # Relative logits in width dimension first.
         rel_embedding_w = tf.compat.v1.get_variable('r_width', shape=(2*W-1, self.depth_k_h), 
-                                          initializer = tf.random_normal_initializer(self.depth_k_h**-0.5))         # TF 2.0 is tf.Variable 
+                                         initializer = tf.random_normal_initializer(self.depth_k_h**-0.5))         # TF 2.0 is tf.Variable 
         
-        
+        #rel_embedding_w = tf.Variable(tf.random.normal((2*W-1, self.depth_k_h), mean = self.depth_k_h**-0.5), trainable=True, name='r_width')  
+        #rel_embeddings_h = tf.Variable(tf.random.normal((2*H-1, self.depth_k_h), mean = self.depth_k_h**-0.5), trainable=True, name='r_height')  
+
+        # compat.v1.get_variable
         # [B, N_h, HW, HW]
         rel_logits_w = self.relative_logits_1d(q_h, rel_embedding_w, H, W, [0, 1, 2, 4, 3, 5])
         
@@ -204,49 +210,3 @@ class SelfAttention2D:
         rel_logits = tf.reshape(rel_logits, [-1, self.N_h, H*W, H*W])
         
         return rel_logits
-
-
-"""
-import sys 
-
-sys.path.append("..")
-from cifar10_dataset.data_loader import get_train_val_test_datasets
-
-from utils import plotting 
-import tensorflow as tf
-import matplotlib.pyplot as plt
-
-
-x_train, y_train, x_val, y_val, x_test, y_test, mean  = get_train_val_test_datasets(5000)
-x_train, y_train, x_val, y_val, x_test, y_test, mean  = get_train_val_test_datasets(5000)
-
-pixels_rows = [6,10,23,17]
-pixels_cols = [30,2,12,18]
-
-idx_sample = 3 #26102
-
-sample = x_train[idx_sample:idx_sample+1]
-
-plotting.plot_sample(sample[0] , mean, True, pixels_cols, pixels_rows)
-
-
-
-a = tf.convert_to_tensor(sample)
-
-
-attention_layer = SelfAttention2D(N_h=8, depth_k=160, depth_v=160, relative=True)
-attention_layer.forward_pass(a)
-
-attention_maps = attention_layer.attention_maps
-# -- H, W, num_attention_heads, H, W
-tf.shape(attention_maps)
-
-# plotting.plot_attention_map_pixel(attention_maps, (30,6))
-
-plotting.plot_attention_maps_pixels(attention_maps, pixels_rows, pixels_cols)
-
-
-
-# -- H, W, num_attention_heads, H, W
-# attention_scores = attention_scores.permute(0, 1, 4, 2, 3)
-"""

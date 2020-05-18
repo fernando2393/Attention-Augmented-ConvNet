@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun May  3 21:00:24 2020
+Created on Thu May 14 12:39:16 2020
 
 @author: MatteoDM, FernandoGS, FlaviaGV
 """
+
 import tensorflow as tf
 import tensorflow.keras
 from tensorflow.keras.layers import Dense, Conv2D
@@ -14,6 +15,7 @@ from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras import backend as K
 from tensorflow.keras.models import Model
+from layers.test_layer import augmented_conv2d
 import numpy as np
 
 
@@ -53,7 +55,7 @@ def resnet_layer(inputs,
 
     return x
 
-def resnet34(input_shape, num_classes):
+def resnet34_att_augmented(input_shape, num_classes, k, v, n_heads, relative_encoding=True):
     """ResNet Version 1 Model builder [a]
 
     Stacks of 2 x (3 x 3) Conv2D-BN-ReLU
@@ -96,17 +98,29 @@ def resnet34(input_shape, num_classes):
     num_res_blocks = [3, 4, 6, 3]
     for stack in range(4):
         for res_block in range(num_res_blocks[stack]):
-            strides = 1
-            if stack > 0 and res_block == 0:  # first layer but not first stack
-                strides = 2  # downsample
-            y = resnet_layer(inputs=x,
-                             kernel_size=(3,3),
-                             num_filters=num_filters,
-                             strides=strides)
-            y = resnet_layer(inputs=y,
-                             kernel_size=(3,3),
-                             num_filters=num_filters,
-                             activation=None)
+            strides = (1, 1)
+            # if stack > 0 and res_block == 0:  # first layer but not first stack
+            #     strides = (2, 2)  # downsample
+            if stack > 0:
+                y = augmented_conv2d(x, F_out=num_filters, kernel_size=(3, 3),
+                          k=float(k), v=float(v),
+                          num_heads=n_heads, relative_encodings=relative_encoding,
+                          strides=strides)
+                y = BatchNormalization()(y)
+                y = Activation('relu')(y)
+                y = augmented_conv2d(y, F_out=num_filters, kernel_size=(3, 3),
+                          k=float(k), v=float(v),
+                          num_heads=n_heads, relative_encodings=relative_encoding)
+                y = BatchNormalization()(y)
+            else:
+                y = resnet_layer(inputs=x,
+                                 kernel_size=(3,3),
+                                 num_filters=num_filters,
+                                 strides=strides)
+                y = resnet_layer(inputs=y,
+                                 kernel_size=(3,3),
+                                 num_filters=num_filters,
+                                 activation=None)
             if stack > 0 and res_block == 0:  # first layer but not first stack
                 # linear projection residual shortcut connection to match
                 # changed dims
@@ -133,5 +147,3 @@ def resnet34(input_shape, num_classes):
     # Instantiate model.
     model = Model(inputs=inputs, outputs=outputs)
     return model
-
-  

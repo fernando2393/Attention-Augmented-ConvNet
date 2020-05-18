@@ -4,13 +4,15 @@ Created on Mon May 11 14:58:53 2020
 
 @author: MatteoDM, FernandoGS, FlaviaGV
 """
+import sys
+sys.path.append("..")
 
 from tensorflow.keras.layers import Conv2D
-from self_attention import SelfAttention2D
+from layers.self_attention import SelfAttention2D
 import tensorflow as tf
 
 
-def augmented_conv2d(X, F_out, k, N_h, depth_k, depth_v, relative):
+def augmented_conv2d(X, F_out, k, strides, N_h, depth_k, depth_v, relative):
     """
     Augment conv2d by using self-attention features. It is possible that 
     all the features come from conv2d or from self-attention. This will 
@@ -46,11 +48,11 @@ def augmented_conv2d(X, F_out, k, N_h, depth_k, depth_v, relative):
         return self_attent_out
         
     elif depth_v == 0:
-        conv2d_out = Conv2D(filters=n_conv_features, kernel_size=k, padding='same')(X)
+        conv2d_out = Conv2D(filters=n_conv_features, kernel_size=k, padding='same', strides=strides)(X)
         return conv2d_out
         
     else: 
-        conv2d_out = Conv2D(filters=n_conv_features, kernel_size=k, padding='same')(X)
+        conv2d_out = Conv2D(filters=n_conv_features, kernel_size=k, padding='same', strides=strides)(X)
         self_attent_out = SelfAttention2D(N_h, depth_k, depth_v, relative).forward_pass(X)
         augmented_conv2d_out = tf.concat([conv2d_out, self_attent_out], axis=3)
         return augmented_conv2d_out 
