@@ -2,7 +2,7 @@
 """
 Created on Wed May 13 13:15:58 2020
 
-@author: matte
+@author: MatteoDM, FernandoGS, FlaviaGV
 """
 
 import tensorflow as tf

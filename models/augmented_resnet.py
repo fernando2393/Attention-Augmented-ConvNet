@@ -2,7 +2,7 @@
 """
 Created on Mon May 11 18:15:46 2020
 
-@author: matte
+@author: MatteoDM, FernandoGS, FlaviaGV
 """
 
 import sys

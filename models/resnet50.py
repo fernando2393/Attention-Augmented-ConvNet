@@ -2,7 +2,7 @@
 """
 Created on Sun May  3 21:00:24 2020
 
-@author: matte
+@author: MatteoDM, FernandoGS, FlaviaGV
 """
 import tensorflow as tf
 import tensorflow.keras
@@ -15,10 +15,6 @@ from tensorflow.keras.regularizers import l2
 from tensorflow.keras import backend as K
 from tensorflow.keras.models import Model
 import numpy as np
-
-
- 
-##TODO: Move in the layer namespace
 
 
 def resnet_layer(inputs,

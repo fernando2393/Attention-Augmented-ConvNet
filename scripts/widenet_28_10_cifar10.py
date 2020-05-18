@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri May 8 17:16:29 2020
+
+@author: MatteoDM, FernandoGS, FlaviaGV
+"""
+
 import sys
 sys.path.append("..")
 import tensorflow as tf

@@ -2,7 +2,7 @@
 """
 Created on Thu May 14 12:39:16 2020
 
-@author: matte
+@author: MatteoDM, FernandoGS, FlaviaGV
 """
 
 import tensorflow as tf
@@ -17,10 +17,6 @@ from tensorflow.keras import backend as K
 from tensorflow.keras.models import Model
 from layers.test_layer import augmented_conv2d
 import numpy as np
-
-
- 
-##TODO: Move in the layer namespace
 
 
 def resnet_layer(inputs,

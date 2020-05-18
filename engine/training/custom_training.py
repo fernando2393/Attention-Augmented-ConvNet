@@ -2,10 +2,9 @@
 """
 Created on Fri May  8 20:30:12 2020
 
-@author: matte
+@author: MatteoDM, FernandoGS, FlaviaGV
 """
 import tensorflow as tf
-import tensorflow.keras
 from preprocessing.augmentation import Augment2D
 from engine.learning_rate.linear_cos_annealing import LinearCosAnnelingLrSchedule
 from tqdm import tqdm

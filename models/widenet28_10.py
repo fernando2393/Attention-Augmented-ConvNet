@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri May 8 17:14:34 2020
+
+@author: MatteoDM, FernandoGS, FlaviaGV
+"""
+
 import tensorflow as tf
 from layers.test_layer import augmented_conv2d
 

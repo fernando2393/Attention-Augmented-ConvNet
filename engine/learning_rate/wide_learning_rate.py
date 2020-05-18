@@ -2,7 +2,7 @@
 """
 Created on Sat May  11 2:29:36 2020
 
-@author: fernando
+@author: MatteoDM, FernandoGS, FlaviaGV
 """
 import math
 

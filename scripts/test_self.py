@@ -2,24 +2,14 @@
 """
 Created on Wed May 13 13:45:27 2020
 
-@author: matte
+@author: MatteoDM, FernandoGS, FlaviaGV
 """
 
 import sys
 sys.path.append("..")
-
 import tensorflow.keras
-#from models.resnet import resnet_34
 from models.self_att_test import aug_con_2d
-
-from models.resnet50 import resnet34
 from cifar10_dataset.data_loader import get_train_val_test_datasets
-import numpy as np
-from preprocessing.augmentation import Augment2D
-from engine.learning_rate.linear_cos_annealing import LinearCosAnnelingLrSchedule
-from engine.training.custom_training import TrainingEngine
-from engine.learning_rate.step import StepLearningRate
-from tensorflow.keras.optimizers import Adam, SGD
 import tensorflow as tf
 
 #import tensorflow.compat.v1 as tf

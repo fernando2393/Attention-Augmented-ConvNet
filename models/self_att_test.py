@@ -2,7 +2,7 @@
 """
 Created on Wed May 13 11:51:01 2020
 
-@author: matte
+@author: MatteoDM, FernandoGS, FlaviaGV
 """
 
 from layers.test_layer import augmented_conv2d

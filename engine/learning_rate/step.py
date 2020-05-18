@@ -2,7 +2,7 @@
 """
 Created on Sat May  9 20:06:06 2020
 
-@author: matte
+@author: MatteoDM, FernandoGS, FlaviaGV
 """
 
 
