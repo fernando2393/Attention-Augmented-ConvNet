@@ -22,7 +22,7 @@ def layer_selection(augmented_cnt, not_augmented_layers, inputs, filters, kernel
     return x, augmented_cnt
 
 
-def wide_basic(inputs, in_planes, out_planes, stride, augmented):
+def wide_basic(inputs, in_planes, out_planes, stride):
     if stride != 1 or in_planes != out_planes:
         skip_c = augmented_conv2d(inputs, out_planes, kernel_size=1, strides=stride, k=1.0, v=1.0)
     # elif stride != 1 or in_planes != out_planes:
@@ -47,11 +47,11 @@ def wide_basic(inputs, in_planes, out_planes, stride, augmented):
     return x
 
 
-def wide_layer(out, in_planes, out_planes, num_blocks, stride, augmented):
+def wide_layer(out, in_planes, out_planes, num_blocks, stride):
     strides = [stride] + [1] * int(num_blocks - 1)
     i = 0
     for strid in strides:
-        out = wide_basic(out, in_planes, out_planes, strid, augmented)
+        out = wide_basic(out, in_planes, out_planes, strid)
         in_planes = out_planes
         i += 1
 
@@ -65,9 +65,9 @@ def make_resnet_fully_selfatt_filter(inputs, depth=28, widen_factor=10, num_clas
     nstages = [16, 16 * k, 32 * k, 64 * k]
     #x = tf.keras.layers.Conv2D(nstages[0], kernel_size=3, strides=1, use_bias=True, padding='same')(inputs)
     x = augmented_conv2d(inputs, nstages[0], kernel_size=3, strides=1, k=1.0, v=1.0)
-    x = wide_layer(x, nstages[0], nstages[1], n, stride=1, augmented=augmented)
-    x = wide_layer(x, nstages[1], nstages[2], n, stride=2, augmented=augmented)
-    x = wide_layer(x, nstages[2], nstages[3], n, stride=2, augmented=augmented)
+    x = wide_layer(x, nstages[0], nstages[1], n, stride=1)
+    x = wide_layer(x, nstages[1], nstages[2], n, stride=2)
+    x = wide_layer(x, nstages[2], nstages[3], n, stride=2)
     x = tf.keras.layers.BatchNormalization(momentum=0.9, scale=True, center=True, trainable=True)(x)
     x = tf.nn.relu(x)
     x = tf.keras.layers.AvgPool2D([8, 8])(x)

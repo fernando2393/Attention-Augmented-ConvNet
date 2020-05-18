@@ -9,7 +9,7 @@ import sys
 sys.path.append("..")
 import tensorflow as tf
 import cifar10_dataset.data_loader as ld
-import models.widenet20_10_fully_self_att as widenet_fully_selfatt
+import models.widenet28_10_fully_self_att as widenet_fully_selfatt
 from engine.training.custom_training import TrainingEngine
 from engine.learning_rate.wide_learning_rate import WideLearningRate
 from tensorflow.keras.optimizers import SGD
@@ -35,7 +35,8 @@ def main():
     input_shape = x_train.shape[1:]
     inputs = tf.keras.Input(shape=input_shape)
     # Define the model architecture
-    model = widenet_fully_selfatt.make_resnet_fully_selfatt_filter(inputs, depth=28, widen_factor=10, augmented=augmented)
+    model = widenet_fully_selfatt.make_resnet_fully_selfatt_filter(inputs, depth=28, widen_factor=10,
+                                                                   augmented=augmented)
     training_module = TrainingEngine(model)
     training_module.lr_scheduler = WideLearningRate
     training_module.optimizer = SGD(lr=training_module.lr_scheduler.get_learning_rate(epoch=0),
