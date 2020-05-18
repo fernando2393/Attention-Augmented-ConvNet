@@ -15,7 +15,7 @@ from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras import backend as K
 from tensorflow.keras.models import Model
-from layers.test_layer import augmented_conv2d
+from layers.augmented_layer import augmented_conv2d
 import numpy as np
 
 

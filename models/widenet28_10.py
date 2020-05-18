@@ -6,7 +6,7 @@ Created on Fri May 8 17:14:34 2020
 """
 
 import tensorflow as tf
-from layers.test_layer import augmented_conv2d
+from layers.augmented_layer import augmented_conv2d
 
 
 def wide_basic(inputs, in_planes, out_planes, stride, augmented):

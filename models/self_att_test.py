@@ -5,13 +5,13 @@ Created on Wed May 13 11:51:01 2020
 @author: MatteoDM, FernandoGS, FlaviaGV
 """
 
-from layers.test_layer import augmented_conv2d
+from layers.augmented_layer import augmented_conv2d
 from layers.self_attention import SelfAttention2D
 #from layers.augmented_conv2d import augmented_conv2d
 from tensorflow.keras.layers import BatchNormalization, Activation, Flatten
 from tensorflow.keras.layers import Dense, Conv2D, Input
 from tensorflow.keras.models import Model
-from layers.test_layer import AttentionAugmentation2D
+from layers.augmented_layer import AttentionAugmentation2D
 
 
 def augmented_resnet_layer(inputs,
