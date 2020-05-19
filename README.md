@@ -8,4 +8,4 @@ To run the experiments:
 - Modify the network parameters to customize the architecture.
 - Run the selected code (it needs TensorFlow in its version 2 to run).
 
-The conclsusions of the different experiments are shown in the [report] (/Group76_Project_Report.pdf)
+The conclsusions of the different experiments can be find in Group76_Project_Report.pdf
