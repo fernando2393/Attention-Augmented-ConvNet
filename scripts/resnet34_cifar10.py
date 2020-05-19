@@ -8,7 +8,7 @@ Created on Thu May  7 22:19:21 2020
 import sys
 sys.path.append("..")
 
-from models.resnet50 import resnet34
+from models.resnet34 import resnet34
 from cifar10_dataset.data_loader import get_train_val_test_datasets
 from engine.training.custom_training import TrainingEngine
 from engine.learning_rate.step import StepLearningRate
@@ -50,5 +50,5 @@ if __name__ == "__main__":
     scores = training_module.evaluate(test_data)
     print('Test loss:', scores[1])
     print('Test accuracy:', scores[0])
-    
+
     model.save_weights("./resnet34_220_adam_step_augm.ckpt")
