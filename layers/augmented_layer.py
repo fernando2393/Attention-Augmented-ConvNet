@@ -16,7 +16,7 @@ import tensorflow.keras.backend as K
 
 def _conv_layer(filters, kernel_size, strides=(1, 1), padding='same', name=None):
     return Conv2D(filters, kernel_size, strides=strides, padding=padding,
-                  use_bias=True, kernel_initializer='he_normal', name=name)
+                  use_bias=True, name=name)
 
 
 def _normalize_depth_vars(depth_k, depth_v, filters):
@@ -163,12 +163,12 @@ class AttentionAugmentation2D(Layer):
         weights = tf.nn.softmax(logits, axis=-1)
         maps = tf.identity(weights)
         attn_out = tf.matmul(weights, flat_v)
-        
-        
+
+
         attn_out_shape = [self._batch, self.num_heads, self._height, self._width, self.depth_v // self.num_heads]
         attn_out_shape = tf.stack(attn_out_shape)
         attn_out = tf.reshape(attn_out, attn_out_shape)
-        
+
         attn_out = self.combine_heads_2d(attn_out)
         # [batch, height, width, depth_v]
 
@@ -304,8 +304,8 @@ def augmented_conv2d(ip, f_out, kernel_size=(3, 3), strides=(1, 1),
 
 
     n_conv_features = f_out - depth_v
-    
-    
+
+
     if n_conv_features == 0:
         # Augmented Attention Block
         qkv_conv = _conv_layer(2 * depth_k + depth_v, (1, 1), strides)(ip)
@@ -322,7 +322,7 @@ def augmented_conv2d(ip, f_out, kernel_size=(3, 3), strides=(1, 1),
         attn_out, maps = AttentionAugmentation2D(depth_k, depth_v, num_heads, relative_encodings)(qkv_conv)
         attn_out = _conv_layer(depth_v, kernel_size=(1, 1))(attn_out)
         output = concatenate([conv_out, attn_out], axis=channel_axis)
-        #output = BatchNormalization()(output)
+        output = BatchNormalization()(output)
         return output
 
 
